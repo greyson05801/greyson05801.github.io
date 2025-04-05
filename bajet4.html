@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Budget Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .advice-section {
+            background-color: #e8f4fc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+        .progress {
+            height: 100%;
+            border-radius: 10px;
+            background-color: #2ecc71;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .warning {
+            background-color: #f39c12;
+        }
+        .danger {
+            background-color: #e74c3c;
+        }
+        .summary-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .menu-button {
+            background-color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+        .daily-budget {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .auth-toggle {
+            text-align: center;
+            margin-top: 15px;
+            color: #3498db;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #e74c3c;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Section -->
+    <div id="authSection" class="container auth-container">
+        <div id="loginForm" class="auth-form">
+            <h2>Login</h2>
+            <div>
+                <label for="loginEmail">Email:</label>
+                <input type="email" id="loginEmail" required>
+            </div>
+            <div>
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <div id="loginError" class="error-message hidden"></div>
+            <button onclick="login()">Login</button>
+            <div class="auth-toggle" onclick="showRegisterForm()">Don't have an account? Register</div>
+        </div>
+
+        <div id="registerForm" class="auth-form hidden">
+            <h2>Register</h2>
+            <div>
+                <label for="registerName">Name:</label>
+                <input type="text" id="registerName" required>
+            </div>
+            <div>
+                <label for="registerEmail">Email:</label>
+                <input type="email" id="registerEmail" required>
+            </div>
+            <div>
+                <label for="registerPassword">Password:</label>
+                <input type="password" id="registerPassword" required>
+            </div>
+            <div>
+                <label for="registerConfirmPassword">Confirm Password:</label>
+                <input type="password" id="registerConfirmPassword" required>
+            </div>
+            <div id="registerError" class="error-message hidden"></div>
+            <button onclick="register()">Register</button>
+            <div class="auth-toggle" onclick="showLoginForm()">Already have an account? Login</div>
+        </div>
+    </div>
+
+    <!-- Main Application (hidden by default) -->
+    <div id="appContent" class="hidden">
+        <button class="menu-button" onclick="showSection('instructions')">Instructions</button>
+        <button class="menu-button" onclick="showSection('incomeSection')">Income</button>
+        <button class="menu-button" onclick="showSection('budgetSection')">Budget</button>
+        <button class="menu-button" onclick="showSection('adviceSection')">Advice</button>
+        <button class="menu-button" onclick="logout()" style="float: right;">Logout</button>
+
+        <div id="instructions" class="container instructions">
+            <h2>How to Use This Budget Tracker</h2>
+            <ol>
+                <li><strong>Start with Income:</strong> Enter your monthly income and select days in the month</li>
+                <li><strong>Calculate Budget:</strong> Click "Calculate Budget" to see your daily allowance</li>
+                <li><strong>Enter Rent:</strong> Input your rent amount (this will automatically calculate other categories)</li>
+                <li><strong>Track Spending:</strong> Enter your actual spending in each category</li>
+                <li><strong>Daily Guide:</strong> Use the "Daily Budget" column to guide your daily spending</li>
+                <li><strong>Update Regularly:</strong> Return daily to track your progress</li>
+            </ol>
+            <p><strong>Tip:</strong> Try to stay under the daily budget amounts to ensure you don't overspend by month's end.</p>
+        </div>
+
+        <div id="incomeSection" class="container hidden">
+            <h2>Income Information</h2>
+            <div>
+                <label for="income">Monthly Income (TZS):</label>
+                <input type="number" id="income" placeholder="Enter your monthly income">
+            </div>
+            <div>
+                <label for="days">Days in Month:</label>
+                <select id="days">
+                    <option value="28">28 days</option>
+                    <option value="29">29 days</option>
+                    <option value="30" selected>30 days</option>
+                    <option value="31">31 days</option>
+                </select>
+            </div>
+            <button onclick="calculateBudget()">Calculate Budget</button>
+            
+            <div id="dailyBudgetResult" class="summary-card hidden">
+                <h3>Daily Budget: <span id="dailyAmount">0</span> TZS</h3>
+                <p>This is your average daily spending limit across all categories.</p>
+            </div>
+        </div>
+        
+        <div id="budgetSection" class="container hidden">
+            <h2>Budget Allocation</h2>
+            <table id="budgetTable">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>% of Budget</th>
+                        <th>Monthly Budget</th>
+                        <th>Daily Budget</th>
+                        <th>Actual Spent</th>
+                        <th>Remaining</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Rent/Accommodation</td>
+                        <td>User Input</td>
+                        <td><input type="number" class="allocated" id="rentAmount" placeholder="Enter amount" onchange="updateBudgetAfterRent()"></td>
+                        <td class="daily-budget" id="rentDaily">0</td>
+                        <td><input type="number" class="spent" placeholder="Enter amount"></td>
+                        <td class="remaining">0</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 0%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Food & Essentials</td>
+                        <td>60%</td>
+                        <td><input type="number" class="allocated" id="foodAmount" readonly></td>
+                        <td class="daily-budget" id="foodDaily">0</td>
+                        <td><input type="number" class="spent" placeholder="Enter amount"></td>
+                        <td class="remaining">0</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 0%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Transport</td>
+                        <td>10%</td>
+                        <td><input type="number" class="allocated" id="transportAmount" readonly></td>
+                        <td class="daily-budget" id="transportDaily">0</td>
+                        <td><input type="number" class="spent" placeholder="Enter amount"></td>
+                        <td class="remaining">0</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 0%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Savings & Investment</td>
+                        <td>10%</td>
+                        <td><input type="number" class="allocated" id="savingsAmount" readonly></td>
+                        <td class="daily-budget" id="savingsDaily">0</td>
+                        <td><input type="number" class="spent" placeholder="Enter amount"></td>
+                        <td class="remaining">0</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 0%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Side Hustle/Skill Development</td>
+                        <td>10%</td>
+                        <td><input type="number" class="allocated" id="sideHustleAmount" readonly></td>
+                        <td class="daily-budget" id="sideHustleDaily">0</td>
+                        <td><input type="number" class="spent" placeholder="Enter amount"></td>
+                        <td class="remaining">0</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 0%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Emergency Fund</td>
+                        <td>5%</td>
+                        <td><input type="number" class="allocated" id="emergencyAmount" readonly></td>
+                        <td class="daily-budget" id="emergencyDaily">0</td>
+                        <td><input type="number" class="spent" placeholder="Enter amount"></td>
+                        <td class="remaining">0</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 0%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Personal & Social Life</td>
+                        <td>5%</td>
+                        <td><input type="number" class="allocated" id="personalAmount" readonly></td>
+                        <td class="daily-budget" id="personalDaily">0</td>
+                        <td><input type="number" class="spent" placeholder="Enter amount"></td>
+                        <td class="remaining">0</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 0%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Total</th>
+                        <th>100%</th>
+                        <th id="totalAllocated">0</th>
+                        <th id="totalDaily">0</th>
+                        <th id="totalSpent">0</th>
+                        <th id="totalRemaining">0</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+            <button onclick="updateBudget()">Update Budget</button>
+        </div>
+        
+        <div class="container hidden" id="summarySection">
+            <h2>Financial Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Total Income</h3>
+                    <p id="summaryIncome">0 TZS</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Budgeted</h3>
+                    <p id="summaryBudgeted">0 TZS</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Spent</h3>
+                    <p id="summarySpent">0 TZS</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Remaining</h3>
+                    <p id="summaryRemaining">0 TZS</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container advice-section hidden" id="adviceSection">
+            <h2>Personalized Financial Advice</h2>
+            <div id="lowIncomeAdvice" class="hidden">
+                <h3>For Income Under 300,000 TZS (Low Income)</h3>
+                <ul>
+                    <li><strong>Prioritize Essentials:</strong> Focus on rent, food, and transport first.</li>
+                    <li><strong>Cook at Home:</strong> Preparing meals at home is significantly cheaper.</li>
+                    <li><strong>Use Public Transport:</strong> Minimize transport costs.</li>
+                    <li><strong>Start Small Savings:</strong> Even 5,000 TZS/month builds a safety net.</li>
+                    <li><strong>Explore Side Hustles:</strong> Consider small businesses to supplement income.</li>
+                    <li><strong>Daily Tip:</strong> Track every shilling spent - small amounts add up quickly.</li>
+                </ul>
+            </div>
+            <div id="mediumIncomeAdvice" class="hidden">
+                <h3>For Income 300,000-599,999 TZS (Medium Income)</h3>
+                <ul>
+                    <li><strong>Follow the 50/30/20 Rule:</strong> 50% needs, 30% wants, 20% savings.</li>
+                    <li><strong>Build Emergency Fund:</strong> Aim for 3 months of essential expenses.</li>
+                    <li><strong>Invest in Skills:</strong> Learn skills that can increase your income.</li>
+                    <li><strong>Smart Shopping:</strong> Buy in bulk for non-perishables.</li>
+                    <li><strong>Daily Tip:</strong> Allocate your daily amounts and try to stay under them.</li>
+                </ul>
+            </div>
+            <div id="highIncomeAdvice" class="hidden">
+                <h3>For Income 600,000 TZS and Above (High Income)</h3>
+                <ul>
+                    <li><strong>Maximize Savings:</strong> Aim to save at least 30% of income.</li>
+                    <li><strong>Diversify Investments:</strong> Consider stocks, real estate, or businesses.</li>
+                    <li><strong>Professional Development:</strong> Invest in advanced courses.</li>
+                    <li><strong>Insurance:</strong> Protect your income with health/life insurance.</li>
+                    <li><strong>Daily Tip:</strong> Even with higher income, track daily spending to maximize savings.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fixed percentage allocations
+        const categoryPercentages = {
+            food: 60,
+            transport: 10,
+            savings: 10,
+            sideHustle: 10,
+            emergency: 5,
+            personal: 5
+        };
+
+        // Simple user database (in a real app, this would be server-side)
+        const users = JSON.parse(localStorage.getItem('budgetUsers')) || [];
+        let currentUser = null;
+
+        // Authentication functions
+        function showLoginForm() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            clearErrors();
+        }
+
+        function showRegisterForm() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            clearErrors();
+        }
+
+        function clearErrors() {
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('registerError').textContent = '';
+            document.getElementById('registerError').classList.add('hidden');
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.classList.remove('hidden');
+        }
+
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showError('loginError', 'Please fill in all fields');
+                return;
+            }
+
+            const user = users.find(u => u.email === email && u.password === password);
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentBudgetUser', JSON.stringify(user));
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('appContent').classList.remove('hidden');
+                showSection('instructions');
+            } else {
+                showError('loginError', 'Invalid email or password');
+            }
+        }
+
+        function register() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            
+            if (!name || !email || !password || !confirmPassword) {
+                showError('registerError', 'Please fill in all fields');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('registerError', 'Passwords do not match');
+                return;
+            }
+
+            if (users.some(u => u.email === email)) {
+                showError('registerError', 'Email already registered');
+                return;
+            }
+
+            const newUser = {
+                name,
+                email,
+                password,
+                budgets: []
+            };
+
+            users.push(newUser);
+            localStorage.setItem('budgetUsers', JSON.stringify(users));
+            
+            // Auto-login after registration
+            currentUser = newUser;
+            localStorage.setItem('currentBudgetUser', JSON.stringify(newUser));
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('appContent').classList.remove('hidden');
+            showSection('instructions');
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentBudgetUser');
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('appContent').classList.add('hidden');
+            showLoginForm();
+            // Clear form fields
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        // Check if user is already logged in
+        function checkAuth() {
+            const storedUser = localStorage.getItem('currentBudgetUser');
+            if (storedUser) {
+                currentUser = JSON.parse(storedUser);
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('appContent').classList.remove('hidden');
+                showSection('instructions');
+            } else {
+                document.getElementById('authSection').classList.remove('hidden');
+                document.getElementById('appContent').classList.add('hidden');
+                showLoginForm();
+            }
+        }
+
+        // Budget functions (same as before)
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.container').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            // Always show summary with budget section
+            if (sectionId === 'budgetSection') {
+                document.getElementById('summarySection').classList.remove('hidden');
+            }
+        }
+        
+        function calculateBudget() {
+            const income = parseFloat(document.getElementById('income').value);
+            const days = parseInt(document.getElementById('days').value);
+            
+            if (isNaN(income) || income <= 0) {
+                alert('Please enter a valid monthly income');
+                return;
+            }
+            
+            // Calculate daily budget
+            const dailyBudget = income / days;
+            document.getElementById('dailyAmount').textContent = dailyBudget.toFixed(2);
+            document.getElementById('dailyBudgetResult').classList.remove('hidden');
+            
+            // Enable rent input
+            document.getElementById('rentAmount').disabled = false;
+            
+            // Show budget section
+            showSection('budgetSection');
+            
+            // Show financial advice based on income
+            showFinancialAdvice(income);
+        }
+        
+        function updateBudgetAfterRent() {
+            const income = parseFloat(document.getElementById('income').value);
+            const rent = parseFloat(document.getElementById('rentAmount').value) || 0;
+            const days = parseInt(document.getElementById('days').value);
+            
+            if (rent > income) {
+                alert('Rent cannot exceed your income!');
+                document.getElementById('rentAmount').value = '';
+                return;
+            }
+            
+            const remainingAfterRent = income - rent;
+            
+            // Calculate other categories based on fixed percentages of remaining amount
+            document.getElementById('foodAmount').value = (remainingAfterRent * 0.60).toFixed(2);
+            document.getElementById('transportAmount').value = (remainingAfterRent * 0.10).toFixed(2);
+            document.getElementById('savingsAmount').value = (remainingAfterRent * 0.10).toFixed(2);
+            document.getElementById('sideHustleAmount').value = (remainingAfterRent * 0.10).toFixed(2);
+            document.getElementById('emergencyAmount').value = (remainingAfterRent * 0.05).toFixed(2);
+            document.getElementById('personalAmount').value = (remainingAfterRent * 0.05).toFixed(2);
+            
+            // Calculate daily budgets for each category
+            document.getElementById('rentDaily').textContent = (rent / days).toFixed(2);
+            document.getElementById('foodDaily').textContent = (remainingAfterRent * 0.60 / days).toFixed(2);
+            document.getElementById('transportDaily').textContent = (remainingAfterRent * 0.10 / days).toFixed(2);
+            document.getElementById('savingsDaily').textContent = (remainingAfterRent * 0.10 / days).toFixed(2);
+            document.getElementById('sideHustleDaily').textContent = (remainingAfterRent * 0.10 / days).toFixed(2);
+            document.getElementById('emergencyDaily').textContent = (remainingAfterRent * 0.05 / days).toFixed(2);
+            document.getElementById('personalDaily').textContent = (remainingAfterRent * 0.05 / days).toFixed(2);
+            
+            // Update totals
+            updateBudget();
+        }
+        
+        function showFinancialAdvice(income) {
+            document.getElementById('adviceSection').classList.remove('hidden');
+            
+            // Hide all advice sections first
+            document.getElementById('lowIncomeAdvice').classList.add('hidden');
+            document.getElementById('mediumIncomeAdvice').classList.add('hidden');
+            document.getElementById('highIncomeAdvice').classList.add('hidden');
+            
+            // Show the appropriate advice
+            if (income < 300000) {
+                document.getElementById('lowIncomeAdvice').classList.remove('hidden');
+            } else if (income >= 300000 && income < 600000) {
+                document.getElementById('mediumIncomeAdvice').classList.remove('hidden');
+            } else {
+                document.getElementById('highIncomeAdvice').classList.remove('hidden');
+            }
+        }
+        
+        function updateBudget() {
+            const income = parseFloat(document.getElementById('income').value);
+            if (isNaN(income) || income <= 0) {
+                alert('Please enter your monthly income first');
+                return;
+            }
+            
+            const days = parseInt(document.getElementById('days').value);
+            const rows = document.querySelectorAll('#budgetTable tbody tr');
+            let totalAllocated = 0;
+            let totalSpent = 0;
+            let totalDaily = 0;
+            
+            rows.forEach(row => {
+                const allocated = parseFloat(row.querySelector('.allocated').value) || 0;
+                const spent = parseFloat(row.querySelector('.spent').value) || 0;
+                const daily = allocated / days;
+                
+                const remaining = allocated - spent;
+                
+                row.querySelector('.remaining').textContent = remaining.toFixed(2);
+                
+                // Update progress bar
+                const progressBar = row.querySelector('.progress');
+                const spentPercentage = allocated > 0 ? (spent / allocated) * 100 : 0;
+                progressBar.style.width = Math.min(spentPercentage, 100) + '%';
+                
+                // Change color based on spending
+                if (spentPercentage > 90) {
+                    progressBar.classList.add('danger');
+                    progressBar.classList.remove('warning');
+                } else if (spentPercentage > 70) {
+                    progressBar.classList.add('warning');
+                    progressBar.classList.remove('danger');
+                } else {
+                    progressBar.classList.remove('warning', 'danger');
+                }
+                
+                totalAllocated += allocated;
+                totalSpent += spent;
+                totalDaily += daily;
+            });
+            
+            const totalRemaining = totalAllocated - totalSpent;
+            
+            document.getElementById('totalAllocated').textContent = totalAllocated.toFixed(2);
+            document.getElementById('totalSpent').textContent = totalSpent.toFixed(2);
+            document.getElementById('totalRemaining').textContent = totalRemaining.toFixed(2);
+            document.getElementById('totalDaily').textContent = totalDaily.toFixed(2);
+            
+            // Update summary section
+            document.getElementById('summaryIncome').textContent = income.toFixed(2) + ' TZS';
+            document.getElementById('summaryBudgeted').textContent = totalAllocated.toFixed(2) + ' TZS';
+            document.getElementById('summarySpent').textContent = totalSpent.toFixed(2) + ' TZS';
+            document.getElementById('summaryRemaining').textContent = (income - totalSpent).toFixed(2) + ' TZS';
+        }
+        
+        // Add event listeners to update calculations when values change
+        document.querySelectorAll('.spent').forEach(input => {
+            input.addEventListener('change', updateBudget);
+        });
+        
+        // Initialize the app
+        checkAuth();
+    </script>
+</body>
+</html>
